@@ -1,9 +1,132 @@
+# #!/usr/bin/env python3
+# """
+# One-Line Gemini Chatbot - Complete Implementation
+# Uses Google's new Gen AI SDK (google-genai) for reliable single-line responses
+# Perfect for mood scoring and NLP analysis
+# """
+
+# import os
+# import re
+# import sys
+# from google import genai
+# from google.genai import types
+
+# # Configuration
+# GEMINI_API_KEY = "     "  # Your provided API key
+# MODEL_NAME = "gemini-2.5-flash"  # Fast, reliable model for chat
+# MAX_OUTPUT_TOKENS = 25  # Limit to ensure single sentence (roughly 15-20 words)
+# TEMPERATURE = 0.3  # Lower temperature for more consistent, focused responses
+
+# # System instructions to enforce single-line responses
+# SYSTEM_INSTRUCTION = (
+#     "You are a helpful assistant that ALWAYS responds in exactly ONE short sentence. "
+#     "Never use multiple sentences, bullet points, or line breaks. "
+#     "Keep responses under 20 words and end with proper punctuation."
+# )
+
+# def setup_gemini_client():
+#     """Initialize the Gemini client with proper configuration"""
+#     try:
+#         client = genai.Client(api_key=GEMINI_API_KEY)
+#         return client
+#     except Exception as e:
+#         print(f"Error setting up Gemini client: {e}")
+#         sys.exit(1)
+
+# def clean_response(text):
+#     """Clean and ensure single-line response"""
+#     if not text:
+#         return "I understand."
+
+#     # Remove any line breaks and extra whitespace
+#     cleaned = re.sub(r'\s+', ' ', text.strip())
+
+#     # Find the first complete sentence
+#     sentence_match = re.search(r'^([^.!?]*[.!?])', cleaned)
+#     if sentence_match:
+#         return sentence_match.group(1).strip()
+
+#     # If no punctuation found, add period and limit length
+#     words = cleaned.split()
+#     if len(words) > 20:
+#         cleaned = ' '.join(words[:20])
+
+#     # Ensure it ends with punctuation
+#     if not cleaned.endswith(('.', '!', '?')):
+#         cleaned += '.'
+
+#     return cleaned
+
+# def get_one_line_response(client, user_input):
+#     """Generate a single-line response using Gemini"""
+#     try:
+#         # Enhanced prompt to ensure single-line response
+#         enhanced_prompt = f"{user_input}\n\nRespond in exactly one short sentence (maximum 20 words)."
+
+#         # Generate response with strict configuration
+#         response = client.models.generate_content(
+#             model=MODEL_NAME,
+#             contents=[enhanced_prompt],
+#             config=types.GenerateContentConfig(
+#                 max_output_tokens=MAX_OUTPUT_TOKENS,
+#                 temperature=TEMPERATURE,
+#                 system_instruction=SYSTEM_INSTRUCTION
+#             )
+#         )
+
+#         # Extract and clean the response
+#         if response and response.text:
+#             return clean_response(response.text)
+#         else:
+#             return "I understand your message."
+
+#     except Exception as e:
+#         print(f"Error generating response: {e}")
+#         return "I'm having trouble understanding right now."
+
+# def main():
+#     """Main chatbot loop"""
+#     print("🤖 One-Line Gemini Chatbot Ready!")
+#     print("📝 Perfect for mood scoring and NLP analysis")
+#     print("💬 Every response is exactly one sentence")
+#     print("🔧 Type 'quit' to exit")
+#     print("-" * 50)
+
+#     # Initialize the client
+#     client = setup_gemini_client()
+
+#     # Chat loop
+#     while True:
+#         try:
+#             # Get user input
+#             user_input = input("\nYou: ").strip()
+
+#             # Check for exit command
+#             if user_input.lower() in ['quit', 'exit', 'bye']:
+#                 print("Bot: Goodbye! Have a great day.")
+#                 break
+
+#             # Skip empty input
+#             if not user_input:
+#                 continue
+
+#             # Generate and display response
+#             bot_response = get_one_line_response(client, user_input)
+#             print(f"Bot: {bot_response}")
+
+#         except KeyboardInterrupt:
+#             print("\n\nBot: Chat session ended. Goodbye!")
+#             break
+#         except Exception as e:
+#             print(f"Unexpected error: {e}")
+#             continue
+
+# if __name__ == "__main__":
+#     main()
+
+
 import os
 import google.generativeai as genai
-
-from dotenv import load_dotenv
-
-load_dotenv()
 
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 model = genai.GenerativeModel("gemini-1.5-flash")  # or "gemini-1.5-pro"
@@ -13,44 +136,6 @@ SYSTEM_PROMPT = (
     "For each user message, reply with helpful, specific advice or encouragement in one short, clear sentence. "
     "Do not simply repeat the user's message."
 )
-
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
-from torch.nn.functional import softmax
-import torch
-
-# Load model
-model_name = "bhadresh-savani/distilbert-base-uncased-emotion"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-emotion_model = AutoModelForSequenceClassification.from_pretrained(model_name)
-
-# 5-mood mapping
-def predict_emotion_and_score(text):
-    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True)
-    outputs = emotion_model(**inputs)
-    probs = softmax(outputs.logits, dim=1)
-    pred_id = torch.argmax(probs).item()
-    label = emotion_model.config.id2label[pred_id].lower()
-
-    if label in ["joy", "love", "amusement", "admiration", "approval", "caring", "optimism", "pride", "relief"]:
-        mood = "Happy"
-        score = 90
-    elif label in ["realization", "neutral", "curiosity"]:
-        mood = "Calm"
-        score = 70
-    elif label in ["confusion", "nervousness", "surprise"]:
-        mood = "Confused"
-        score = 50
-    elif label in ["sadness", "disappointment", "grief", "remorse", "embarrassment"]:
-        mood = "Sad"
-        score = 30
-    elif label in ["anger", "disgust", "fear", "disapproval"]:
-        mood = "Angry"
-        score = 15
-    else:
-        mood = "Calm"
-        score = 60
-
-    return mood, score
 
 def get_one_line_response(user_input):
     prompt = (
@@ -72,41 +157,12 @@ if __name__ == "__main__":
     print("💬 Every response is exactly one sentence")
     print("🔧 Type 'quit' to exit")
     print("-" * 50)
-
-    user_inputs = []  # To collect chat messages
-
     while True:
         user = input("You: ")
         if user.lower() == "quit":
             break
-        user_inputs.append(user)
         try:
             bot = get_one_line_response(user)
             print("Bot:", bot)
         except Exception as e:
             print("Error:", e)
-            try:
-                bot = get_one_line_response(user)
-                print("Bot:", bot)
-            except Exception as e:
-                print("Error:", e)
-
-    # ✅ This runs AFTER the chat ends
-    print("\n📊 Analyzing your chat mood...")
-
-    scores = []
-    moods = []
-
-    for text in user_inputs:
-        mood, score = predict_emotion_and_score(text)
-        scores.append(score)
-        moods.append(mood)
-
-    if scores:
-        avg_score = sum(scores) / len(scores)
-        dominant_mood = max(set(moods), key=moods.count)
-
-        print(f"\n✅ Final Mood Score: {round(avg_score, 2)}")
-        print(f"🎭 Overall Mood: {dominant_mood}")
-    else:
-        print("No user inputs to analyze.")
